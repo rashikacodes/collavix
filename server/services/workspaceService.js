@@ -30,3 +30,31 @@ exports.getWorkspacesForUser = async (userId) => {
     role: m.role,
   }));
 };
+
+exports.getWorkspaceById = async (workspaceId) => {
+  return Workspace.findById(workspaceId);
+};
+
+exports.updateWorkspace = async (workspaceId, updates) => {
+  const allowedUpdates = {
+    name: updates.name,
+    description: updates.description,
+  };
+
+  return Workspace.findByIdAndUpdate(
+    workspaceId,
+    allowedUpdates,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+};
+
+exports.deleteWorkspace = async (workspaceId) => {
+  await WorkspaceMember.deleteMany({
+    workspaceId,
+  });
+
+  await Workspace.findByIdAndDelete(workspaceId);
+};
