@@ -1,6 +1,7 @@
 const express = require("express");
-
+const projectRoutes = require("./projectRoutes");
 const router = express.Router();
+router.use("/:id/projects", projectRoutes);
 const validateObjectId = require('../middlewares/validateObjectId');
 const {
   createWorkspace,
