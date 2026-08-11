@@ -1,18 +1,18 @@
 const express = require("express");
+const taskRoutes = require("./taskRoutes");
 
 const router = express.Router({
   mergeParams: true,
 });
 
 const { protect } = require("../middlewares/authMiddleware");
+const { requireWorkspaceRole } = require("../middlewares/workspaceAuth");
+const validateObjectId = require("../middlewares/validateObjectId");
+const validateRequest = require("../middlewares/validateRequest");
 
 const {
-  requireWorkspaceRole,
-} = require("../middlewares/workspaceAuth");
-
-const validateObjectId = require("../middlewares/validateObjectId");
-
-const validateRequest = require("../middlewares/validateRequest");
+  verifyProjectInWorkspace,
+} = require("../middlewares/resourceOwnership");
 
 const {
   createProjectValidation,
@@ -28,6 +28,8 @@ const {
 } = require("../controllers/projectController");
 
 router.use(protect);
+
+router.use("/:projectId/tasks", taskRoutes);
 
 router.post(
   "/",
@@ -57,6 +59,7 @@ router.get(
     "member",
     "viewer",
   ]),
+  verifyProjectInWorkspace,
   getProject
 );
 
@@ -64,6 +67,7 @@ router.put(
   "/:projectId",
   validateObjectId("projectId"),
   requireWorkspaceRole(["owner", "admin"]),
+  verifyProjectInWorkspace,
   updateProjectValidation,
   validateRequest,
   updateProject
@@ -73,6 +77,7 @@ router.delete(
   "/:projectId",
   validateObjectId("projectId"),
   requireWorkspaceRole(["owner", "admin"]),
+  verifyProjectInWorkspace,
   deleteProject
 );
 
