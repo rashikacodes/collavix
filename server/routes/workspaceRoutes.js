@@ -2,7 +2,7 @@ const express = require("express");
 const projectRoutes = require("./projectRoutes");
 const router = express.Router();
 router.use("/:id/projects", projectRoutes);
-const validateObjectId = require('../middlewares/validateObjectId');
+const validateObjectId = require("../middlewares/validateObjectId");
 const {
   createWorkspace,
   getMyWorkspaces,
@@ -11,13 +11,9 @@ const {
   deleteWorkspace,
 } = require("../controllers/workspaceController");
 
-const {
-  protect,
-} = require("../middlewares/authMiddleware");
+const { protect } = require("../middlewares/authMiddleware");
 
-const {
-  requireWorkspaceRole,
-} = require("../middlewares/workspaceAuth");
+const { requireWorkspaceRole } = require("../middlewares/workspaceAuth");
 
 const validateRequest = require("../middlewares/validateRequest");
 
@@ -38,40 +34,42 @@ const {
 } = require("../validators/workspaceMemberValidators");
 router.use(protect);
 
-router.post(
-  "/",
-  createWorkspaceValidation,
-  validateRequest,
-  createWorkspace
-);
+router.post("/", createWorkspaceValidation, validateRequest, createWorkspace);
+
+router.get("/", getMyWorkspaces);
 
 router.get(
-  "/",
-  getMyWorkspaces
+  "/:id",
+  validateObjectId(),
+  requireWorkspaceRole(["owner", "admin", "member", "viewer"]),
+  getWorkspace,
 );
-
-router.get('/:id', validateObjectId(), requireWorkspaceRole(['owner', 'admin', 'member', 'viewer']), getWorkspace);
-router.put('/:id', validateObjectId(), requireWorkspaceRole(['owner', 'admin']), updateWorkspace);
-router.delete('/:id', validateObjectId(), requireWorkspaceRole(['owner']), deleteWorkspace);
+router.put(
+  "/:id",
+  validateObjectId(),
+  requireWorkspaceRole(["owner", "admin"]),
+  updateWorkspace,
+);
+router.delete(
+  "/:id",
+  validateObjectId(),
+  requireWorkspaceRole(["owner"]),
+  deleteWorkspace,
+);
 router.post(
   "/:id/members",
   validateObjectId(),
   requireWorkspaceRole(["owner", "admin"]),
   addMemberValidation,
   validateRequest,
-  addMember
+  addMember,
 );
 
 router.get(
   "/:id/members",
   validateObjectId(),
-  requireWorkspaceRole([
-    "owner",
-    "admin",
-    "member",
-    "viewer",
-  ]),
-  listMembers
+  requireWorkspaceRole(["owner", "admin", "member", "viewer"]),
+  listMembers,
 );
 
 router.patch(
@@ -80,13 +78,13 @@ router.patch(
   requireWorkspaceRole(["owner"]),
   updateRoleValidation,
   validateRequest,
-  updateMemberRole
+  updateMemberRole,
 );
 
 router.delete(
   "/:id/members/:memberId",
   validateObjectId(),
   requireWorkspaceRole(["owner", "admin"]),
-  removeMember
+  removeMember,
 );
 module.exports = router;
