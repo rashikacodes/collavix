@@ -53,11 +53,39 @@ exports.deleteTask = async (taskId) => {
   return Task.findByIdAndDelete(taskId);
 };
 exports.moveTask = async (taskId, { status, beforeTaskId, afterTaskId }) => {
+  const task = await Task.findById(taskId);
+  if (!task) {
+    const err = new Error('Task not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const validateNeighbor = async (neighborId, label) => {
+    if (!neighborId) return null;
+
+    const neighbor = await Task.findById(neighborId);
+    if (!neighbor) {
+      const err = new Error(`${label} does not reference an existing task`);
+      err.statusCode = 400;
+      throw err;
+    }
+    if (neighbor.projectId.toString() !== task.projectId.toString()) {
+      const err = new Error(`${label} does not belong to the same project`);
+      err.statusCode = 400;
+      throw err;
+    }
+    if (neighbor.status !== status) {
+      const err = new Error(`${label} is not in the destination column`);
+      err.statusCode = 400;
+      throw err;
+    }
+    return neighbor;
+  };
+
+  const beforeTask = await validateNeighbor(beforeTaskId, 'beforeTaskId');
+  const afterTask = await validateNeighbor(afterTaskId, 'afterTaskId');
+
   let newOrder;
-
-  const beforeTask = beforeTaskId ? await Task.findById(beforeTaskId) : null;
-  const afterTask = afterTaskId ? await Task.findById(afterTaskId) : null;
-
   if (beforeTask && afterTask) {
     newOrder = (beforeTask.order + afterTask.order) / 2;
   } else if (beforeTask) {
@@ -68,9 +96,8 @@ exports.moveTask = async (taskId, { status, beforeTaskId, afterTaskId }) => {
     newOrder = 1000;
   }
 
-  return Task.findByIdAndUpdate(
-    taskId,
-    { status, order: newOrder },
-    { returnDocument: "after", runValidators: true }
-  );
+  task.status = status;
+  task.order = newOrder;
+  await task.save();
+  return task;
 };

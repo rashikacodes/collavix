@@ -123,9 +123,9 @@ exports.moveTask = async (req, res) => {
   try {
     const { status, beforeTaskId, afterTaskId } = req.body;
     const task = await taskService.moveTask(req.params.taskId, { status, beforeTaskId, afterTaskId });
-    if (!task) return res.status(404).json({ message: 'Task not found' });
     res.status(200).json({ task });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to move task', error: err.message });
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({ message: statusCode === 500 ? 'Failed to move task' : err.message });
   }
 };
