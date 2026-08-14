@@ -68,5 +68,9 @@ exports.updateTaskValidation = [
     .isMongoId()
     .withMessage("Invalid assigned user"),
 ];
-
+exports.moveTaskValidation = [
+  body('status').notEmpty().isIn(['todo', 'in_progress', 'review', 'done']).withMessage('Invalid status'),
+  body('beforeTaskId').optional({ nullable: true }).isMongoId().withMessage('Invalid beforeTaskId'),
+  body('afterTaskId').optional({ nullable: true }).isMongoId().withMessage('Invalid afterTaskId'),
+];
 // TODO: Verify assigned user belongs to the workspace.

@@ -14,6 +14,11 @@ const validateObjectId = require("../middlewares/validateObjectId");
 
 const validateRequest = require("../middlewares/validateRequest");
 
+
+const { moveTaskValidation } = require('../validators/taskValidators');
+
+
+
 const {
   verifyProjectInWorkspace,
   verifyTaskInProject,
@@ -30,6 +35,7 @@ const {
   getTask,
   updateTask,
   deleteTask,
+  moveTask,
 } = require("../controllers/taskController");
 
 router.use(protect);
@@ -92,6 +98,20 @@ router.delete(
   verifyProjectInWorkspace,
   verifyTaskInProject,
   deleteTask
+);
+
+
+
+router.patch(
+  '/:taskId/move',
+  validateObjectId('projectId'),
+  validateObjectId('taskId'),
+  requireWorkspaceRole(['owner', 'admin', 'member']),
+  verifyProjectInWorkspace,
+  verifyTaskInProject,
+  moveTaskValidation,
+  validateRequest,
+  moveTask
 );
 
 module.exports = router;

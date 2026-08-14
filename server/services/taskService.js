@@ -1,29 +1,22 @@
 const Task = require("../models/Task");
 
-exports.createTask = async ({
-  projectId,
-  title,
-  description,
-  status,
-  priority,
-  assignedTo,
-  deadline,
-  createdBy,
-}) => {
-  return Task.create({
-    projectId,
-    title,
-    description,
-    status,
-    priority,
-    assignedTo,
-    deadline,
-    createdBy,
-  });
+const getNextOrder = async (projectId, status) => {
+  const lastTask = await Task.findOne({ projectId, status }).sort({ order: -1 });
+  return lastTask ? lastTask.order + 1000 : 1000;
 };
 
+exports.createTask = async ({
+  projectId, title, description, status, priority, assignedTo, deadline, createdBy,
+}) => {
+  const taskStatus = status || 'todo';
+  const order = await getNextOrder(projectId, taskStatus);
+
+  return Task.create({
+    projectId, title, description, status: taskStatus, priority, assignedTo, deadline, createdBy, order,
+  });
+};
 exports.getTasksForProject = async (projectId) => {
-  return Task.find({ projectId }).sort({ createdAt: -1 });
+  return Task.find({ projectId }).sort({ status: 1, order: 1 }); 
 };
 
 exports.getTaskById = async (taskId) => {
@@ -58,4 +51,26 @@ exports.updateTask = async (taskId, updates) => {
 
 exports.deleteTask = async (taskId) => {
   return Task.findByIdAndDelete(taskId);
+};
+exports.moveTask = async (taskId, { status, beforeTaskId, afterTaskId }) => {
+  let newOrder;
+
+  const beforeTask = beforeTaskId ? await Task.findById(beforeTaskId) : null;
+  const afterTask = afterTaskId ? await Task.findById(afterTaskId) : null;
+
+  if (beforeTask && afterTask) {
+    newOrder = (beforeTask.order + afterTask.order) / 2;
+  } else if (beforeTask) {
+    newOrder = beforeTask.order + 1000;
+  } else if (afterTask) {
+    newOrder = afterTask.order - 1000;
+  } else {
+    newOrder = 1000;
+  }
+
+  return Task.findByIdAndUpdate(
+    taskId,
+    { status, order: newOrder },
+    { returnDocument: "after", runValidators: true }
+  );
 };
