@@ -23,7 +23,7 @@ export default function SignupPage() {
 
     try {
       await signup(name, email, password);
-      router.push("/dashboard");
+      router.push("/workspaces");
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         setError(
